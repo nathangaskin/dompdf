@@ -1151,7 +1151,7 @@ class CPDF implements Canvas
      * Streams the PDF to the client.
      *
      * @param string $filename The filename to present to the client.
-     * @param array $options Associative array: 'compress' => 1 or 0 (default 1); 'Attachment' => 1 or 0 (default 1).
+     * @param array $options Associative array: 'compress' => 1 or 0 (default 1); 'Attachment' => 1 or 0 (default 1); 'chunked' => 1 or 0 (default 0).
      */
     public function stream($filename = "document.pdf", $options = [])
     {
@@ -1161,6 +1161,7 @@ class CPDF implements Canvas
 
         if (!isset($options["compress"])) $options["compress"] = true;
         if (!isset($options["Attachment"])) $options["Attachment"] = true;
+        if (!isset($options["chunked"])) $options["chunked"] = true;
 
         $this->_add_page_text();
 
@@ -1169,7 +1170,11 @@ class CPDF implements Canvas
 
         header("Cache-Control: private");
         header("Content-Type: application/pdf");
-        header("Content-Length: " . mb_strlen($tmp, "8bit"));
+        if ($options["chunked"] == true) {
+            header("Transfer-Encoding: chunked");
+        } else {
+            header("Content-Length: " . mb_strlen($tmp, "8bit"));
+        }
 
         $filename = str_replace(["\n", "'"], "", basename($filename, ".pdf")) . ".pdf";
         $attachment = $options["Attachment"] ? "attachment" : "inline";
